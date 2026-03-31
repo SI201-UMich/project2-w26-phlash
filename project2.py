@@ -373,46 +373,63 @@ class TestCases(unittest.TestCase):
         self.detailed_data = create_listing_database(self.search_results_path)
 
     def test_load_listing_results(self):
-        # TODO: Check that the number of listings extracted is 18.
-        # TODO: Check that the FIRST (title, id) tuple is  ("Loft in Mission District", "1944564").
-        pass
+        # Check that the number of listings extracted is 18 [cite: 111]
+        self.assertEqual(len(self.listings), 18)
+        # Check that the FIRST (title, id) tuple is correct [cite: 112]
+        self.assertEqual(self.listings[0], ("Loft in Mission District", "1944564"))
 
     def test_get_listing_details(self):
         html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
+        # Call get_listing_details() on each listing id [cite: 114]
+        results = [get_listing_details(id) for id in html_list]
 
-        # TODO: Call get_listing_details() on each listing id above and save results in a list.
-
-        # TODO: Spot-check a few known values by opening the corresponding listing_<id>.html files.
-        # 1) Check that listing 467507 has the correct policy number "STR-0005349".
-        # 2) Check that listing 1944564 has the correct host type "Superhost" and room type "Entire Room".
-        # 3) Check that listing 1944564 has the correct location rating 4.9.
-        pass
+        # 1) Check that listing 467507 has the correct policy number [cite: 117]
+        self.assertEqual(results[0]["467507"]["policy_number"], "STR-0005349")
+        # 2) Check listing 1944564 host type and room type [cite: 118, 120]
+        self.assertEqual(results[2]["1944564"]["host_type"], "Superhost")
+        self.assertEqual(results[2]["1944564"]["room_type"], "Entire Room")
+        # 3) Check listing 1944564 location rating [cite: 121]
+        self.assertEqual(results[2]["1944564"]["location_rating"], 4.9)
 
     def test_create_listing_database(self):
-        # TODO: Check that each tuple in detailed_data has exactly 7 elements:
-        # (listing_title, listing_id, policy_number, host_type, host_name, room_type, location_rating)
+        # Check that each tuple in detailed_data has exactly 7 elements [cite: 123]
+        for row in self.detailed_data:
+            self.assertEqual(len(row), 7)
 
-        # TODO: Spot-check the LAST tuple is ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8).
-        pass
+        # Spot-check the last tuple in the database [cite: 124, 126, 127]
+        expected_last = ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8)
+        self.assertEqual(self.detailed_data[-1], expected_last)
 
     def test_output_csv(self):
         out_path = os.path.join(self.base_dir, "test.csv")
+        # Write the detailed_data to a CSV file [cite: 129]
+        output_csv(self.detailed_data, out_path)
+        
+        # Read the CSV back in [cite: 130]
+        with open(out_path, 'r', encoding='utf-8-sig') as f:
+            reader = list(csv.reader(f))
+            # Check the first data row matches expectations [cite: 132]
+            first_data_row = reader[1]
+            self.assertEqual(first_data_row[0], "Guesthouse in San Francisco")
+            self.assertEqual(first_data_row[1], "49591060")
+            self.assertEqual(first_data_row[2], "STR-0000253")
+            self.assertEqual(first_data_row[-1], "5.0")
 
-        # TODO: Call output_csv() to write the detailed_data to a CSV file.
-        # TODO: Read the CSV back in and store rows in a list.
-        # TODO: Check that the first data row matches ["Guesthouse in San Francisco", "49591060", "STR-0000253", "Superhost", "Ingrid", "Entire Room", "5.0"].
-
-        os.remove(out_path)
+        if os.path.exists(out_path):
+            os.remove(out_path)
 
     def test_avg_location_rating_by_room_type(self):
-        # TODO: Call avg_location_rating_by_room_type() and save the output.
-        # TODO: Check that the average for "Private Room" is 4.9.
-        pass
+        # Call the function and save output [cite: 134]
+        res = avg_location_rating_by_room_type(self.detailed_data)
+        # Check that the average for "Private Room" is 4.9 [cite: 135]
+        self.assertEqual(res.get("Private Room"), 4.9)
 
     def test_validate_policy_numbers(self):
-        # TODO: Call validate_policy_numbers() on detailed_data and save the result into a variable invalid_listings.
-        # TODO: Check that the list contains exactly "16204265" for this dataset.
-        pass
+        # Call validate_policy_numbers() [cite: 137]
+        invalid = validate_policy_numbers(self.detailed_data)
+        # Check that the list contains exactly "16204265" [cite: 138]
+        self.assertIn("16204265", invalid)
+        self.assertEqual(len(invalid), 1)
 
 
 def main():
