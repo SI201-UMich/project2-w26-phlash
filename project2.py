@@ -175,12 +175,25 @@ def create_listing_database(html_path) -> list[tuple]:
     """
     # TODO: Implement checkout logic following the instructions
     # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
+    # 1. Get titles and IDs 
+    listings = load_listing_results(html_path)
+    full_data = []
+    
+    # 2. Loop through and grab the deep details for each 
+    for title, l_id in listings:
+        details = get_listing_details(l_id)
+        info = details[l_id]
+        
+        # 3. Combine into the specific tuple order required 
+        entry = (title, l_id, info['policy_number'], info['host_type'], 
+                 info['host_name'], info['room_type'], info['location_rating'])
+        full_data.append(entry)
+        
+    return full_data
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
+
 
 
 def output_csv(data, filename) -> None:
@@ -200,10 +213,40 @@ def output_csv(data, filename) -> None:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    # Sort by location rating descending 
+    sorted_data = sorted(data, key=lambda x: x[6], reverse=True)
+    
+    with open(filename, 'w', newline='', encoding='utf-8-sig') as f:
+        writer = csv.writer(f)
+        # Write the headers exactly as requested
+        writer.writerow(["Listing Title", "Listing ID", "Policy Number", "Host Type", "Host Name", "Room Type", "Location Rating"])
+        # Write the actual data rows
+        writer.writerows(sorted_data)
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
+
+# Inside your TestCases class:
+def test_create_listing_database(self):
+    # Check that each tuple has 7 elements
+    for row in self.detailed_data:
+        self.assertEqual(len(row), 7)
+    
+    # Spot-check the last tuple in the list
+    expected_last = ("Guest suite in Mission District", "467507", "STR-0005349", "Superhost", "Jennifer", "Entire Room", 4.8)
+    self.assertEqual(self.detailed_data[-1], expected_last)
+
+def test_output_csv(self):
+    out_path = os.path.join(self.base_dir, "test.csv")
+    output_csv(self.detailed_data, out_path)
+    
+    with open(out_path, 'r', encoding='utf-8-sig') as f:
+        reader = list(csv.reader(f))
+        # Check that the first data row (after header) matches the top-rated listing 
+        first_data_row = reader[1]
+        self.assertEqual(first_data_row[0], "Guesthouse in San Francisco")
+        self.assertEqual(first_data_row[1], "49591060")
+        self.assertEqual(first_data_row[-1], "5.0")
 
 
 def avg_location_rating_by_room_type(data) -> dict:
