@@ -89,12 +89,77 @@ def get_listing_details(listing_id) -> dict:
     """
     # TODO: Implement checkout logic following the instructions
     # ==============================
-    # YOUR CODE STARTS HERE
-    # ==============================
-    pass
+    file_path = os.path.join("html_files", f"listing_{listing_id}.html")
+    
+    with open(file_path, 'r', encoding='utf-8-sig') as f:
+        soup = BeautifulSoup(f, 'html.parser')
+
+    # 1. Policy Number logic
+    policy_tag = soup.find('li', class_='f19sbt9a')
+    policy_text = policy_tag.get_text().strip() if policy_tag else ""
+    
+    if "pending" in policy_text.lower():
+        policy = "Pending"
+    elif "exempt" in policy_text.lower() or "not needed" in policy_text.lower():
+        policy = "Exempt"
+    else:
+        # Clean up "License number: " if it exists
+        policy = policy_text.replace("License number:", "").strip()
+
+    # 2. Host info
+    host_tag = soup.find('h2', class_='hpipapi')
+    host_name = host_tag.get_text().replace("Hosted by ", "").strip() if host_tag else ""
+    
+    # Check for Superhost badge text
+    host_type = "Superhost" if soup.find(string=re.compile("Superhost")) else "regular"
+
+    # 3. Room Type logic based on subtitle
+    sub_tag = soup.find('h2', class_='_147n9p1')
+    subtitle = sub_tag.get_text() if sub_tag else ""
+    
+    if "private" in subtitle.lower():
+        room_type = "Private Room"
+    elif "shared" in subtitle.lower():
+        room_type = "Shared Room"
+    else:
+        room_type = "Entire Room"
+
+    # 4. Location Rating (pulling from the ratings section)
+    location_rating = 0.0
+    loc_span = soup.find('span', string="Location")
+    if loc_span:
+        try:
+            # Finding the sibling div that holds the actual number
+            score_container = loc_span.find_parent('div').find_next_sibling('div')
+            location_rating = float(score_container.get_text())
+        except:
+            location_rating = 0.0
+
+    return {
+        listing_id: {
+            "policy_number": policy,
+            "host_type": host_type,
+            "host_name": host_name,
+            "room_type": room_type,
+            "location_rating": location_rating
+        }
+    }
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
+
+# Inside your TestCases class:
+def test_get_listing_details(self):
+    html_list = ["467507", "1550913", "1944564", "4614763", "6092596"]
+    results = [get_listing_details(id) for id in html_list]
+    
+    # 1) Check policy number for 467507
+    self.assertEqual(results[0]["467507"]["policy_number"], "STR-0005349")
+    # 2) Check host/room type for 1944564
+    self.assertEqual(results[2]["1944564"]["host_type"], "Superhost")
+    self.assertEqual(results[2]["1944564"]["room_type"], "Entire Room")
+    # 3) Check rating for 1944564
+    self.assertEqual(results[2]["1944564"]["location_rating"], 4.9)
 
 
 def create_listing_database(html_path) -> list[tuple]:
