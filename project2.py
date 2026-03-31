@@ -266,7 +266,21 @@ def avg_location_rating_by_room_type(data) -> dict:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    room_totals = {}
+    room_counts = {}
+    
+    for row in data:
+        room_type = row[5]
+        rating = row[6]
+        
+        # skip those 0.0 ratings per the instructions 
+        if rating > 0:
+            room_totals[room_type] = room_totals.get(room_type, 0) + rating
+            room_counts[room_type] = room_counts.get(room_type, 0) + 1
+            
+    # calc the average for each type found
+    averages = {rtype: round(room_totals[rtype] / room_counts[rtype], 1) for rtype in room_totals}
+    return averages
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -287,7 +301,24 @@ def validate_policy_numbers(data) -> list[str]:
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    invalid_ids = []
+    # official regex for 20##-00####STR or STR-000#### 
+    pattern1 = r'^20\d{2}-00\d{4}STR$'
+    pattern2 = r'^STR-000\d{4}$'
+    
+    for row in data:
+        l_id = row[1]
+        policy = row[2]
+        
+        # skip the ones that aren't numbers
+        if policy in ["Pending", "Exempt"]:
+            continue
+            
+        # if it doesn't match either valid format, flag it
+        if not (re.match(pattern1, policy) or re.match(pattern2, policy)):
+            invalid_ids.append(l_id)
+            
+    return invalid_ids
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
@@ -307,10 +338,30 @@ def google_scholar_searcher(query):
     # ==============================
     # YOUR CODE STARTS HERE
     # ==============================
-    pass
+    url = f"https://scholar.google.com/scholar?q={query}"
+    # need a user-agent so google doesn't block the request immediately
+    headers = {'User-Agent': 'Mozilla/5.0'}
+    resp = requests.get(url, headers=headers)
+    soup = BeautifulSoup(resp.text, 'html.parser')
+    
+    # article titles are usually in h3 tags with class gs_rt
+    titles = [t.get_text() for t in soup.find_all('h3', class_='gs_rt')]
+    return titles
     # ==============================
     # YOUR CODE ENDS HERE
     # ==============================
+
+# Final Test Cases
+def test_avg_location_rating_by_room_type(self):
+    res = avg_location_rating_by_room_type(self.detailed_data)
+    # verify the private room avg matches the rubric
+    self.assertEqual(res.get("Private Room"), 4.9)
+
+def test_validate_policy_numbers(self):
+    invalid = validate_policy_numbers(self.detailed_data)
+    # the instructions say this specific ID should be the only one 
+    self.assertIn("16204265", invalid)
+    self.assertEqual(len(invalid), 1)
 
 
 class TestCases(unittest.TestCase):
